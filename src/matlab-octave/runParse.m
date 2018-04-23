@@ -10,16 +10,22 @@
 %% set path to data logs
 % set the path to the correct Open edX instance before running
 
-% addpath to D4M
-addpath('/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/')
-
+% Set locations of D4M, data, and outline
+D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
 dataLoc='../data/raw/';
 saveLoc = '../data/parsed/';
 outlineLoc = '../data/';
+%outlineLoc = '';
+
+addpath(D4M_Loc)
 fnames=dir([dataLoc 'tracking.log-*']);
 
-outlineName = dir([outlineLoc 'outline*']);
-outlineName=outlineName(end).name;
+if ~isempty(outlineLoc)
+    outlineName = dir([outlineLoc 'outline*']);
+    outlineName=outlineName(end).name;
+else
+    outlineName = '';
+end
 
 if ~exist(saveLoc,'dir')
     mkdir(saveLoc)

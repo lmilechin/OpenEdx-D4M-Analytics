@@ -42,7 +42,7 @@ function [cols] = makecols(logline,allOutlines,prefix)
         logline.('event_type') = 'navigation';
         logline.('context').('path') = currPage;
 
-        if incourseware(lastPage,logline) && incourseware(currPage,logline)%(contains(lastPage,logline('context')('course_id')*'/courseware/') && !contains(lastPage,'loglinein')) && 
+        if incourseware(lastPage,logline) && incourseware(currPage,logline) && ~isempty(allOutlines)%(contains(lastPage,logline('context')('course_id')*'/courseware/') && !contains(lastPage,'loglinein')) && 
             %(contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein'))
             [modName,secName,courseLoc] = extractnames(lastPage,allOutlines);
             cols = [cols 'last_module_name|' modName newline];
@@ -59,7 +59,7 @@ function [cols] = makecols(logline,allOutlines,prefix)
         currPage = logline.('referer');
     end
 
-    if toplevel && incourseware(currPage,logline) %haskey(logline,'event_type') && contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein')
+    if toplevel && incourseware(currPage,logline) && ~isempty(allOutlines) %haskey(logline,'event_type') && contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein')
         [modName,secName,courseLoc] = extractnames(currPage,allOutlines);
         cols = [cols 'module_name|' modName newline];
         cols = [cols 'section_name|' secName newline];
