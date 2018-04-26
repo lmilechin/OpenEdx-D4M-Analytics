@@ -2,6 +2,8 @@ function [A] = parseFile(fname,outlineName)
 %UNTITLED8 Summary of this function goes here
 %   Detailed explanation goes here
 
+nl = char(10);
+
 if ~isempty(outlineName)
     hasOutline = 1;
 else
@@ -15,7 +17,7 @@ if hasOutline
     outline=fread(fid,'char=>char')';
     fclose(fid);
     
-    outline=split(outline,newline);
+    outline=strsplit(outline,nl);
     outlines = cellfun(@jsondecode,outline,'UniformOutput',false);
     allOutlines=struct();
     
@@ -30,7 +32,7 @@ fid=fopen(fname,'r');
 clickstream=fread(fid,'char=>char')';
 fclose(fid);
 
-clickCell=strsplit(clickstream,newline);
+clickCell=strsplit(clickstream,nl);
 if strcmp(clickCell{end},'')
     clickCell=clickCell(1:end-1);
 end

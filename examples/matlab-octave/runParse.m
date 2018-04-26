@@ -2,7 +2,7 @@
 %  Date:   06/27/2017
 
 %   Given a log file location (dataLoc) and save location (saveLoc),
-%   runNewParse will iterate through all the files in dataLoc, copy the
+%   runParse will iterate through all the files in dataLoc, copy the
 %   file to the current directory, unzip the file, read in the file and
 %   parse the data, save the data to saveLoc, and delete the unzipped local
 %   copy of the log. This driver file uses "newParse" as the parser. Dependency on pMATLAB.
@@ -12,12 +12,14 @@
 
 % Set locations of D4M, data, and outline
 D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
+parserLoc = '../../src/matlab-octave/';
 dataLoc='../data/raw/';
-saveLoc = '../data/parsed/';
+saveLoc = '../data/parsed/matlab-octave/';
 outlineLoc = '../data/';
 %outlineLoc = '';
 
 addpath(D4M_Loc)
+addpath(parserLoc)
 fnames=dir([dataLoc 'tracking.log-*']);
 
 if ~isempty(outlineLoc)
@@ -36,56 +38,18 @@ emptyFiles=zeros(length(fnames),1);
 myFiles = 1:Nfile;
 
 for i=myFiles
-    tic
     fname=fnames(i).name;
     copyfile([dataLoc fname],'.');
     system(['gunzip ' fname]);
     A=parseFile(strrep(fname,'.gz',''),fullfile(outlineLoc,outlineName));
-    %A=newParse(strrep(fname,'.gz',''));
+    
     delete(strrep(fname,'.gz',''))
     if ~isempty(A)
         save([saveLoc strrep(fname,'.gz','.mat')],'A');
     else
         emptyFiles(i)=1;
     end
-    toc
 end
-
-%bwsiSeparate
-%
-% load([saveLoc strrep(fnames(38),'.gz','.mat')],'A');
-% julie=A(Row(A(:,['username|JMullen' nl])),:);
-% instructor=julie;
-% studentX=A(Row(A(:,['username|StudentX' nl])),:);
-% student2=A(Row(A(:,['username|Student2' nl])),:);
-% student1=A(Row(A(:,['username|Student1' nl])),:);
-% save('truthData','instructor','student1','student2','studentX','A');
-
-% fnames(logical(emptyFiles),:)=[];
-% tic
-% Aall=Assoc('','',1);
-% for i=1:length(fnames)
-%     fname=strrep(fnames(i).name,'.gz','.mat');
-%     load([saveLoc fname]);
-%     Aall=Aall+A;
-% end
-% toc
-% 
-% % Separate Studio
-% %Astudio=Aall(Row(Aall(:,StartsWith(['referer|http://llx-dev1.llgrid.ll.mit.edu:' nl]))),:);
-% Astudio=Aall(Row(Aall(:,StartsWith(['referer|http://llx.llgrid.ll.mit.edu:' nl]))),:);
-% A=Aall-Astudio;
-% 
-% save('AllLogEvents','A','Astudio')
-% 
-% A=Aall(Row(Aall(:,['course_id|course-v1:LLX+LLX04+Q3_2016' char(10)])),:);
-% 
-% save('BYORevents','A')
-
-% %%
-% betaTesters=A(Row(A(:,['username|aklein' nl 'username|cbyun' nl])),:);
-% 
-% save('betaTesters','betaTesters')
 
 %%	
 % Copyright and Licensing: This collection of code is released under a BSD license.
