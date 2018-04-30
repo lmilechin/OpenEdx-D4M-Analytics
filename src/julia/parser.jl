@@ -68,29 +68,43 @@ function makecols(dict,allOutlines,prefix="")
     
     currPage = ""
     
-    # If: event_type == context_path AND [host event_type] ~= referer, this is a navigation event
-    if toplevel && haskey(dict["context"],"path") && (dict["event_type"] == dict["context"]["path"]) && ~contains(dict["event_type"],"handler") && (["https://"*dict["host"]*dict["event_type"]] != dict["referer"])
+    if toplevel && dict["event_type"] == "edx.course.home.resume_course.clicked"
+        lastPage = dict["referer"]
+        currPage = dict["event"]["url"]
+        dict["event_type"] = "navigation"
+    elseif toplevel && (dict["event_type"] == "edx.ui.lms.link_clicked" || dict["event_type"] == "edx.ui.lms.outline.selected")
+        lastPage = dict["event"]["current_url"]
+        currPage = dict["event"]["target_url"]
+        dict["event_type"] = "navigation"
+    elseif toplevel && haskey(dict["context"],"path") && (dict["event_type"] == dict["context"]["path"]) && ~contains(dict["event_type"],"handler") && (["https://"*dict["host"]*dict["event_type"]] != dict["referer"])
         currPage = "https://"*dict["host"]*dict["event_type"]
         lastPage = dict["referer"]
+
+        # Uncomment these if you get edx.course.home.resume_course.clicked 
+        # or edx.ui.lms.* events and don't want them double counted
+#        if incourseware(lastPage,dict) || incourseware(currPage,dict)
+#            return ""
+#        end
         dict["event_type"] = "navigation"
         dict["context"]["path"] = currPage
-
-        if incourseware(lastPage,dict) && incourseware(currPage,dict) && haskey(allOutlines,dict["context"]["course_id"])
-            modName,secName,courseLoc = extractnames(lastPage,allOutlines)
-            cols = [cols; "last_module_name|"*modName]
-            cols = [cols; "last_section_name|"*secName]
-            cols = [cols; "last_course_loc|"*courseLoc]
-            
+    elseif haskey(dict,"referer")
+        currPage = dict["referer"]
+    end
+        
+    if toplevel && dict["event_type"] == "navigation" && incourseware(lastPage,dict) && haskey(allOutlines,dict["context"]["course_id"])
+        
+        modName,secName,courseLoc = extractnames(lastPage,allOutlines)
+        cols = [cols; "last_module_name|"*modName]
+        cols = [cols; "last_section_name|"*secName]
+        cols = [cols; "last_course_loc|"*courseLoc]
+        if incourseware(currPage,dict)
             modName,secName,courseLoc = extractnames(currPage,allOutlines)
             cols = [cols; "new_module_name|"*modName]
             cols = [cols; "new_section_name|"*secName]
             cols = [cols; "new_course_loc|"*courseLoc]
         end
-        
-    elseif haskey(dict,"referer")
-        currPage = dict["referer"]
     end
-
+        
     if toplevel && incourseware(currPage,dict) && haskey(allOutlines,dict["context"]["course_id"])
         modName,secName,courseLoc = extractnames(currPage,allOutlines)
         cols = [cols; "module_name|"*modName]
@@ -106,10 +120,10 @@ function makecols(dict,allOutlines,prefix="")
             if ~isa(dict[key][1],Dict)
                 cols = [cols; (prefix*key*'|').*replace.(dict[key],"\n","")]
             else
-                cols = [cols; join(join.(makecols.(dict[key],prefix*key*'_')))]
+                cols = [cols; join(join.(makecols.(dict[key],allOutlines,prefix*key*'_')))]
             end
         elseif isa(dict[key],Dict)
-            cols = [cols; makecols(dict[key],prefix*key*'_')]
+            cols = [cols; makecols(dict[key],allOutlines,prefix*key*'_')]
         end
         
     end
@@ -120,7 +134,14 @@ end
 
 function makeAssoc(fname,log,allOutlines)
     
-    log = log[.~contains.(log,"\"username\": \"\"")];
+    unneeded=["/handler/xmodule_handler/problem_get","/handler/xmodule_handler/problem_show",
+    "/handler/transcript/translation/en","/handler/xmodule_handler/goto_position",
+    "/handler/xmodule_handler/save_user_state'","/jsi18n","/handler/xmodule_handler/problem_check",
+    "/i18n.js","/xmodule/xmodule.js","problem_graded","page_close","\"username\": \"\""]
+
+    for str in unneeded
+        log = log[.~contains.(log,str)];
+    end
     log = JSON.parse.(log);
 
     cols = makecols.(log,allOutlines)
@@ -129,7 +150,7 @@ function makeAssoc(fname,log,allOutlines)
     rIDs = (fname[14:end]*'_').*lpad.([1:length(log);],4,0).*'\n';
     rIDs = split(join(repeat.(rIDs,lens),"")[1:end-1],'\n')
 
-    cIDs = split(join(join.(cols,'\n'),'\n'),'\n')
+    cIDs = split(join(join.(cols[cols .!= ""],'\n'),'\n'),'\n')
     
     A = Assoc(rIDs, cIDs, 1)
     
@@ -156,11 +177,14 @@ function parseFile(fname,savename,outlineName)
 end
 
 function extractnames(url,allOutlines)
+    println(url)
     url = split(url,'/')
-    courseID = url[5]
-
-    modID = replace(courseID,"course","block")*"+type@chapter+block@"*url[7]
-    secID = replace(courseID,"course","block")*"+type@sequential+block@"*url[8]
+    courseIdx = find(url.=="courses")[1]+1
+    courseID = url[courseIdx]
+    
+    modID = replace(courseID,"course","block")*"+type@chapter+block@"*url[courseIdx+2]
+    println(modID)
+    secID = replace(courseID,"course","block")*"+type@sequential+block@"*url[courseIdx+3]
     courseIDfull = replace(courseID,"course","block")*"+type@course+block@course"
     
     if haskey(allOutlines[courseID],modID)
