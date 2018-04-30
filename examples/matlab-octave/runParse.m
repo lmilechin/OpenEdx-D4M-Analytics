@@ -12,7 +12,8 @@
 
 % Set locations of D4M, data, and outline
 D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
-parserLoc = '../../src/matlab-octave/';
+jsonlabLoc = '../../src/matlab-octave/jsonlab/'
+parserLoc = '../../src/matlab-octave/octave/';
 dataLoc='../data/raw/';
 saveLoc = '../data/parsed/matlab-octave/';
 outlineLoc = '../data/';
@@ -20,6 +21,7 @@ outlineLoc = '../data/';
 
 addpath(D4M_Loc)
 addpath(parserLoc)
+addpath(jsonlabLoc)
 fnames=dir([dataLoc 'tracking.log-*']);
 
 if ~isempty(outlineLoc)
@@ -37,10 +39,11 @@ emptyFiles=zeros(length(fnames),1);
 %myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));
 myFiles = 1:Nfile;
 
-for i=myFiles
+for i=myFiles(1:5)
+tic
     fname=fnames(i).name;
     copyfile([dataLoc fname],'.');
-    system(['gunzip ' fname]);
+    system(['gunzip -f ' fname]);
     A=parseFile(strrep(fname,'.gz',''),fullfile(outlineLoc,outlineName));
     
     delete(strrep(fname,'.gz',''))
@@ -49,6 +52,7 @@ for i=myFiles
     else
         emptyFiles(i)=1;
     end
+    toc
 end
 
 %%	
