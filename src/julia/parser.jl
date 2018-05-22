@@ -181,7 +181,6 @@ function extractnames(url,allOutlines)
     courseID = url[courseIdx]
     
     modID = replace(courseID,"course","block")*"+type@chapter+block@"*url[courseIdx+2]
-    println(modID)
     secID = replace(courseID,"course","block")*"+type@sequential+block@"*url[courseIdx+3]
     courseIDfull = replace(courseID,"course","block")*"+type@course+block@course"
     
