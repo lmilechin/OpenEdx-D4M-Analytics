@@ -162,7 +162,6 @@ function parseFile(fname,savename,outlineName)
     run(`gunzip -f $lfname.gz`)
     f = open(lfname)
     log = readlines(f)
-    println(fname)
     outlines = JSON.parse.(readlines(outlineName))
     allOutlines = Dict{String,Any}()
     for o in outlines
@@ -177,7 +176,6 @@ function parseFile(fname,savename,outlineName)
 end
 
 function extractnames(url,allOutlines)
-    println(url)
     url = split(url,'/')
     courseIdx = find(url.=="courses")[1]+1
     courseID = url[courseIdx]
