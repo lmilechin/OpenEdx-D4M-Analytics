@@ -64,10 +64,8 @@ for i=myFiles
     end
     A=parseFile(strrep(fname,'.gz',''),allOutlines);
     
-    Col(A(:,StartsWith(['module_name|' char(10)])))
-    
     delete(strrep(fname,'.gz',''))
-    %delete(fname)
+    
     if ~isempty(A)
         save([saveLoc strrep(fname,'.gz','.mat')],'A');
     else
