@@ -109,6 +109,7 @@ for i=1:length(keys)
         else
             disp('array of structs not currently supported')
         end
+        
     % If field is a struct, recursively call makecols on the struct
     elseif isa(logline.(key),'struct')
         cols = [cols makecols(logline.(key),allOutlines,[prefix key '_'])];
