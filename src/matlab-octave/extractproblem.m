@@ -1,6 +1,9 @@
 function [eventcols,event] = extractproblem(event)
 %UNTITLED7 eventcols of this function goes here
 %   Detailed explanation goes here
+
+global newline;
+
 event = rmfield(event,'state'); % not useful?
 event = rmfield(event,'answers'); % info in submission
 submission = event.('submission'); 
@@ -15,7 +18,7 @@ prob_id = '';
 keys = fieldnames(submission);
 for i=1:length(keys)
     key = keys{i};
-    full_id = split(key,'_');
+    full_id = strsplit(key,'_');
     sub_id = strjoin(full_id(2:3),'_');
     keys2 = fieldnames(submission.(key));
     for j = 1:length(keys2)
@@ -42,7 +45,7 @@ eventcols = [eventcols 'event_problem_id|' prob_id newline 'event_problem_id_lon
 keys = fieldnames(correct_map);
 for i=1:length(keys)
     key = keys{i};
-    full_id = split(key,'_');
+    full_id = strsplit(key,'_');
     sub_id = strjoin(full_id(2:3),'_');
     keys2 = fieldnames(correct_map.(key));
     for j=1:length(keys2)

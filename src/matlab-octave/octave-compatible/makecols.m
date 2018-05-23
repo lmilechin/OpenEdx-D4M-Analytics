@@ -70,7 +70,7 @@ if toplevel && incourseware(currPage,logline) && ~isempty(allOutlines) && isfiel
 end
 
 keys = fieldnames(logline);
-for i=1:length(keys)%key in keys(logline)
+for i=1:length(keys)
     key = keys{i};
     
     if (isa(logline.(key),'char') || isa(logline.(key),'double')) && ~isempty(logline.(key))
@@ -83,8 +83,7 @@ for i=1:length(keys)%key in keys(logline)
             newstr = strjoin(strrep(logline.(key),newline,''),[newline prefix key '|']);
             cols = [cols prefix key '|' newstr newline];
         else
-            disp('this not done yet')
-            %cols = (cols join(join(makecols(logline(key),prefix*key*'_'))))
+            disp('array of structs not supported')
         end
     elseif isa(logline.(key),'struct')
         cols = [cols makecols(logline.(key),allOutlines,[prefix key '_'])];

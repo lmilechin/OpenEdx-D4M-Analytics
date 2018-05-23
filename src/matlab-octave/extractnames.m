@@ -2,8 +2,11 @@ function [modName,secName,courseLoc] = extractnames(url,allOutlines)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
 
-url = split(url,'/');
-courseID = url{5};
+global newline;
+
+url = strsplit(url,'/');
+courseIdx = find(cellContains(url,'courseware'))-1;
+courseID = url{courseIdx};
 courseID_key = matlab.lang.makeValidName(courseID);
 
 

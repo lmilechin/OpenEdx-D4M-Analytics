@@ -1,5 +1,9 @@
 function [cols] = makecols(logline,allOutlines,prefix)
     
+    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+
+    global newline;
+
     cols='';
     
     if isfield(logline,'agent')
@@ -15,11 +19,15 @@ function [cols] = makecols(logline,allOutlines,prefix)
         logline = rmfield(logline,'event');
     end
     
-    if isfield(logline,'event') && isa(logline.('event'),'char') && contains(logline.('event'),'POST')
+    if isfield(logline,'event') && isa(logline.('event'),'char') && any(strfind(logline.('event'),'POST'))
         logline = rmfield(logline,'event');
-    elseif isfield(logline,'event') && isa(logline.('event'),'char') && contains(logline.('event'),'{')
+    elseif isfield(logline,'event') && isa(logline.('event'),'char') && any(strfind(logline.('event'),'{'))
         try
-            logline.('event')=jsondecode(logline.('event'));
+            if isOctave
+                logline.('event')=loadjson(logline.('event'));
+            else
+                logline.('event')=jsondecode(logline.('event'));
+            end
         catch err
             disp(['Could not parse: ' logline.('event')])
         end
@@ -35,15 +43,14 @@ function [cols] = makecols(logline,allOutlines,prefix)
     % If: event_type == context_path AND (host event_type) ~= referer, this is a navigation event
     if toplevel && isfield(logline.('context'),'path') ...
             && strcmp(logline.('event_type'),logline.('context').('path')) ...
-            && ~contains(logline.('event_type'),'handler') ...
+            && ~any(strfind(logline.('event_type'),'handler')) ...
             && ~strcmp(['https://' logline.('host') logline.('event_type')],logline.('referer'))
         currPage = ['https://' logline.('host') logline.('event_type')];
         lastPage = logline.('referer');
         logline.('event_type') = 'navigation';
         logline.('context').('path') = currPage;
 
-        if incourseware(lastPage,logline) && incourseware(currPage,logline) && isfield(allOutlines,logline.('context').('course_id'))%(contains(lastPage,logline('context')('course_id')*'/courseware/') && !contains(lastPage,'loglinein')) && 
-            %(contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein'))
+        if incourseware(lastPage,logline) && incourseware(currPage,logline) && isfield(allOutlines,logline.('context').('course_id'))
             [modName,secName,courseLoc] = extractnames(lastPage,allOutlines);
             cols = [cols 'last_module_name|' modName newline];
             cols = [cols 'last_section_name|' secName newline];
@@ -65,23 +72,21 @@ function [cols] = makecols(logline,allOutlines,prefix)
         cols = [cols 'section_name|' secName newline];
         cols = [cols 'course_loc|' courseLoc newline];
     end
-    
     keys = fieldnames(logline);
-    for i=1:length(keys)%key in keys(logline)
+    for i=1:length(keys)
         key = keys{i};
         
         if (isa(logline.(key),'char') || isa(logline.(key),'double')) && ~isempty(logline.(key))
             if isa(logline.(key),'double')
                 logline.(key) = num2str(logline.(key));
             end
-            cols = [cols prefix key '|' replace(char(logline.(key)),newline,'') newline];
+            cols = [cols prefix key '|' strrep(char(logline.(key)),newline,'') newline];
         elseif length(logline.(key))>1 && ~isempty(logline.(key))
             if ~isa(logline.(key)(1),'struct')
                 newstr = strjoin(replace(logline.(key),newline,''),[newline prefix key '|']);
                 cols = [cols prefix key '|' newstr newline];
             else
-                disp('this not done yet')
-                %cols = (cols join(join(makecols(logline(key),prefix*key*'_'))))
+                disp('array of structs not supported')
             end
         elseif isa(logline.(key),'struct')
             cols = [cols makecols(logline.(key),allOutlines,[prefix key '_'])];

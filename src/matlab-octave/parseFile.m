@@ -2,7 +2,9 @@ function [A] = parseFile(fname,outlineName)
 %UNTITLED8 Summary of this function goes here
 %   Detailed explanation goes here
 
-nl = char(10);
+isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+
+global newline;
 
 if ~isempty(outlineName)
     hasOutline = 1;
@@ -16,14 +18,21 @@ if hasOutline
     fid=fopen(outlineName,'r');
     outline=fread(fid,'char=>char')';
     fclose(fid);
-    
     outline=strsplit(outline,nl);
-    outlines = cellfun(@jsondecode,outline,'UniformOutput',false);
+    if isOctave
+        outlines = cellfun(@loadjson,outline,'UniformOutput',false);
+    else
+        outlines = cellfun(@jsondecode,outline,'UniformOutput',false);
+    end
     allOutlines=struct();
     
     for i=1:length(outlines)
         o=outlines{i};
-        allOutlines.(matlab.lang.makeValidName(replace(replace(o.('root'),'block','course'),'+type@course+course@course',''))) = o.('blocks');
+        if isOctave
+            allOutlines.(strrep(strrep(o.('root'),'block','course'),'+type@course+course@course','')) = o.('blocks');
+        else
+            allOutlines.(matlab.lang.makeValidName(replace(replace(o.('root'),'block','course'),'+type@course+course@course',''))) = o.('blocks');
+        end
     end
 end
 
@@ -32,7 +41,7 @@ fid=fopen(fname,'r');
 clickstream=fread(fid,'char=>char')';
 fclose(fid);
 
-clickCell=strsplit(clickstream,nl);
+clickCell=strsplit(clickstream,newline);
 if strcmp(clickCell{end},'')
     clickCell=clickCell(1:end-1);
 end

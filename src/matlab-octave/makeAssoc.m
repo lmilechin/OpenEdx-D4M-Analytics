@@ -2,12 +2,19 @@ function [A] = makeAssoc(fname,clickCell,allOutlines)
 %UNTITLED9 Summary of this function goes here
 %   Detailed explanation goes here
 
-clickCell(contains(clickCell,'"page_close"'))=[];
-clickCell(contains(clickCell,'"username": "",'))=[];
+isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+
+global newline;
+
+clickCell(cellContains(clickCell,'"page_close"'))=[];
+clickCell(cellContains(clickCell,'"username": "",'))=[];
 clickCell=strrep(clickCell,', "page": null','');
 
-
-logStructs = cellfun(@jsondecode,clickCell,'UniformOutput',false);
+if isOctave
+    logStructs = cellfun(@loadjson,clickCell,'UniformOutput',false);
+else
+    logStructs = cellfun(@jsondecode,clickCell,'UniformOutput',false);
+end
 
 logcols = cellfun(@(x) makecols(x,allOutlines,''),logStructs,'UniformOutput',false);
 

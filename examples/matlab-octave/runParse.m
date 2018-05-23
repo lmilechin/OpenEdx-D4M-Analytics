@@ -5,24 +5,34 @@
 %   runParse will iterate through all the files in dataLoc, copy the
 %   file to the current directory, unzip the file, read in the file and
 %   parse the data, save the data to saveLoc, and delete the unzipped local
-%   copy of the log. This driver file uses "newParse" as the parser. Dependency on pMATLAB.
+%   copy of the log. This driver file uses "newParse" as the parser.
+%   Dependency on jsonlab if running in Octave.
 
 %% set path to data logs
 % set the path to the correct Open edX instance before running
 
-% Set locations of D4M, data, and outline
+% Set path locations of D4M, data, and outline
 D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
-jsonlabLoc = '../../src/matlab-octave/jsonlab/'
-parserLoc = '../../src/matlab-octave/octave/';
+jsonlabLoc = '/Users/Lauren/Documents/SoftwareAndPackages/jsonlab/'; % only needed for octave
+
+% For this example, these reletive paths should not need editing
+parserLoc = '../../src/matlab-octave/';
 dataLoc='../data/raw/';
 saveLoc = '../data/parsed/matlab-octave/';
 outlineLoc = '../data/';
-%outlineLoc = '';
 
 addpath(D4M_Loc)
 addpath(parserLoc)
-addpath(jsonlabLoc)
 fnames=dir([dataLoc 'tracking.log-*']);
+
+global newline;
+newline = sprintf('\n');
+
+isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+
+if isOctave
+    addpath(jsonlabLoc)
+end
 
 if ~isempty(outlineLoc)
     outlineName = dir([outlineLoc 'outline*']);
@@ -39,8 +49,8 @@ emptyFiles=zeros(length(fnames),1);
 %myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));
 myFiles = 1:Nfile;
 
-for i=myFiles(1:5)
-tic
+for i=myFiles
+    tic
     fname=fnames(i).name;
     copyfile([dataLoc fname],'.');
     system(['gunzip -f ' fname]);

@@ -2,8 +2,6 @@ function [modName,secName,courseLoc] = extractnames(url,allOutlines)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
 
-url = 'https://bwedx.mit.edu/courses/course-v1:LLx+LLX03+Q3_2016/courseware/02b2117125de4bb6a723f55df5190037/d13ed24b30c547a3865082602a060e92/';
-
 if ~exist('newline')
     newline = char(10);
 end
