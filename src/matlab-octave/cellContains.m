@@ -1,14 +1,15 @@
 function [res] = cellContains(cellArray,str)
-%UNTITLED10 Summary of this function goes here
-%   Detailed explanation goes here
+%cellContains determines which cells in a  cell array contain a particular string
+%   Takes in a cell array of strings, and a string.
+%   Ouputs a logical vector, with 1's indicating the indices of the cells
+%   that contain the queried string.
 
-isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+global isOctave;
 
-if isOctave
+if isOctave % Octave does not have a built in function to do this
     res = ~cellfun(@isempty,strfind(cellArray,str));
-else
+else % use Matlab's built in function
     res = contains(cellArray,str);
 end
 
 end
-

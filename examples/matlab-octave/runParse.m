@@ -28,6 +28,7 @@ fnames=dir([dataLoc 'tracking.log-*']);
 global newline;
 newline = sprintf('\n');
 
+global isOctave;
 isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 
 if isOctave
@@ -49,14 +50,24 @@ emptyFiles=zeros(length(fnames),1);
 %myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));
 myFiles = 1:Nfile;
 
+allOutlines = makeoutlines(fullfile(outlineLoc,outlineName));
+
 for i=myFiles
     tic
     fname=fnames(i).name;
-    copyfile([dataLoc fname],'.');
-    system(['gunzip -f ' fname]);
-    A=parseFile(strrep(fname,'.gz',''),fullfile(outlineLoc,outlineName));
+
+    if isOctave
+        copyfile([dataLoc fname],'.');
+        gunzip(fname);
+    else
+        gunzip([dataLoc fname],'.');
+    end
+    A=parseFile(strrep(fname,'.gz',''),allOutlines);
+    
+    Col(A(:,StartsWith(['module_name|' char(10)])))
     
     delete(strrep(fname,'.gz',''))
+    %delete(fname)
     if ~isempty(A)
         save([saveLoc strrep(fname,'.gz','.mat')],'A');
     else

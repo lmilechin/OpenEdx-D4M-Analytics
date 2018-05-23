@@ -2,7 +2,7 @@ function [A] = makeAssoc(fname,clickCell,allOutlines)
 %UNTITLED9 Summary of this function goes here
 %   Detailed explanation goes here
 
-isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+global isOctave;
 
 global newline;
 

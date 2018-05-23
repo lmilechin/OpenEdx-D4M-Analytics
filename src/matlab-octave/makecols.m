@@ -1,7 +1,6 @@
 function [cols] = makecols(logline,allOutlines,prefix)
     
-    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
-
+    global isOctave;
     global newline;
 
     cols='';
@@ -40,17 +39,25 @@ function [cols] = makecols(logline,allOutlines,prefix)
     
     currPage = '';
     
+    if toplevel
+        if isOctave
+            courseID = logline.('context').('course_id');%genvarname(logline.('context').('course_id'));
+        else
+            courseID = matlab.lang.makeValidName(logline.('context').('course_id'));
+        end
+    end
+    
     % If: event_type == context_path AND (host event_type) ~= referer, this is a navigation event
     if toplevel && isfield(logline.('context'),'path') ...
             && strcmp(logline.('event_type'),logline.('context').('path')) ...
             && ~any(strfind(logline.('event_type'),'handler')) ...
             && ~strcmp(['https://' logline.('host') logline.('event_type')],logline.('referer'))
-        currPage = ['https://' logline.('host') logline.('event_type')];
+        currPage = ['https://' logline.('host') logline.('context').('path')];
         lastPage = logline.('referer');
         logline.('event_type') = 'navigation';
         logline.('context').('path') = currPage;
-
-        if incourseware(lastPage,logline) && incourseware(currPage,logline) && isfield(allOutlines,logline.('context').('course_id'))
+        
+        if incourseware(lastPage,logline) && incourseware(currPage,logline) && isfield(allOutlines,courseID)
             [modName,secName,courseLoc] = extractnames(lastPage,allOutlines);
             cols = [cols 'last_module_name|' modName newline];
             cols = [cols 'last_section_name|' secName newline];
@@ -66,7 +73,7 @@ function [cols] = makecols(logline,allOutlines,prefix)
         currPage = logline.('referer');
     end
 
-    if toplevel && incourseware(currPage,logline) && ~isempty(allOutlines) && isfield(allOutlines,logline.('context').('course_id')) %haskey(logline,'event_type') && contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein')
+    if toplevel && incourseware(currPage,logline) && ~isempty(allOutlines) && isfield(allOutlines,courseID) %haskey(logline,'event_type') && contains(currPage,logline('context')('course_id')*'/courseware/') && !contains(currPage,'loglinein')
         [modName,secName,courseLoc] = extractnames(currPage,allOutlines);
         cols = [cols 'module_name|' modName newline];
         cols = [cols 'section_name|' secName newline];

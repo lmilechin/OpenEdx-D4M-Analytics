@@ -1,21 +1,41 @@
 function [modName,secName,courseLoc] = extractnames(url,allOutlines)
-%UNTITLED6 Summary of this function goes here
-%   Detailed explanation goes here
+%extractnames Finds the section and module names for the given url
+%   Given a url and a struct of course outlines, extractnames finds extracts
+%   the module and section IDs from the url and finds them in the struct of
+%   outlines containing their names. Also generates a string indicating the
+%   sequential location in the course: the first three characters indicate the
+%   module index, the second the section index within that module.
 
-global newline;
+global isOctave;
 
+% Split up the URL and find the course ID
 url = strsplit(url,'/');
 courseIdx = find(cellContains(url,'courseware'))-1;
 courseID = url{courseIdx};
-courseID_key = matlab.lang.makeValidName(courseID);
+if isOctave
+    courseID_key = courseID;%genvarname(courseID);
+else
+    courseID_key = matlab.lang.makeValidName(courseID);
+end
+courseFields = fieldnames(allOutlines.(courseID_key));
 
+% 
 
-
-modID =  [replace(courseID,'course','block') '+type@chapter+block@' url{7}];
-secID =  [replace(courseID,'course','block') '+type@sequential+block@' url{8}];
-modID_key =  matlab.lang.makeValidName(modID);
-secID_key =  matlab.lang.makeValidName(secID);
-courseIDfull =  matlab.lang.makeValidName([replace(courseID,'course','block') '+type@course+block@course']);
+if isOctave
+    modIdx = find(cellContains(courseFields, url{courseIdx+2}));
+    secIdx = find(cellContains(courseFields, url{courseIdx+3}));
+    modID =  [strrep(courseID,'course','block') '+type@chapter+block@' url{courseIdx+2}];
+    secID =  [strrep(courseID,'course','block') '+type@sequential+block@' url{courseIdx+3}];
+    modID_key =  courseFields{modIdx};
+    secID_key =  courseFields{secIdx};
+    courseIDfull =  courseFields{cellContains(courseFields, 'course')};
+else
+    modID =  [replace(courseID,'course','block') '+type@chapter+block@' url{courseIdx+2}];
+    secID =  [replace(courseID,'course','block') '+type@sequential+block@' url{courseIdx+3}];
+    modID_key =  matlab.lang.makeValidName(modID);
+    secID_key =  matlab.lang.makeValidName(secID);
+    courseIDfull =  matlab.lang.makeValidName([replace(courseID,'course','block') '+type@course+block@course']);
+end
 
 if isfield(allOutlines.(courseID_key),modID_key)
     modName = allOutlines.(courseID_key).(modID_key).('display_name');
