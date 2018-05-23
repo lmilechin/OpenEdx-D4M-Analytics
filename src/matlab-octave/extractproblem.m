@@ -1,11 +1,15 @@
 function [eventcols,event] = extractproblem(event)
-%UNTITLED7 eventcols of this function goes here
-%   Detailed explanation goes here
+%extractproblem parses out problem events
+%   Given the "event" struct, parses out the fields of interest. Returns
+%   the string of column keys and the remaining fields of the event struct
 
 global newline;
 
+% Remove uninteresting fields
 event = rmfield(event,'state'); % not useful?
 event = rmfield(event,'answers'); % info in submission
+
+% Extract interesting fields and remove them from the struct
 submission = event.('submission'); 
 event = rmfield(event,'submission');
 correct_map = event.('correct_map');
@@ -13,6 +17,7 @@ event = rmfield(event,'correct_map');
 problem_id_long = event.('problem_id');
 event = rmfield(event,'problem_id');
 
+% Parse out the "submission" struct
 eventcols = '';
 prob_id = '';
 keys = fieldnames(submission);
@@ -42,6 +47,7 @@ for i=1:length(keys)
 end
 eventcols = [eventcols 'event_problem_id|' prob_id newline 'event_problem_id_long|' problem_id_long newline];
 
+% Parse out "correct_map"
 keys = fieldnames(correct_map);
 for i=1:length(keys)
     key = keys{i};

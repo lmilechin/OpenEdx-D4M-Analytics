@@ -13,14 +13,13 @@ url = strsplit(url,'/');
 courseIdx = find(cellContains(url,'courseware'))-1;
 courseID = url{courseIdx};
 if isOctave
-    courseID_key = courseID;%genvarname(courseID);
+    courseID_key = courseID;
 else
     courseID_key = matlab.lang.makeValidName(courseID);
 end
 courseFields = fieldnames(allOutlines.(courseID_key));
 
-% 
-
+% Find module and section fieldnames
 if isOctave
     modIdx = find(cellContains(courseFields, url{courseIdx+2}));
     secIdx = find(cellContains(courseFields, url{courseIdx+3}));
@@ -37,6 +36,7 @@ else
     courseIDfull =  matlab.lang.makeValidName([replace(courseID,'course','block') '+type@course+block@course']);
 end
 
+% Get module and section display names
 if isfield(allOutlines.(courseID_key),modID_key)
     modName = allOutlines.(courseID_key).(modID_key).('display_name');
 else
@@ -48,6 +48,7 @@ else
     secName = 'unknown';
 end
 
+% Build course location string
 if strcmp(secName,'unknown') || strcmp(modName,'unknown')
     courseLoc = '000.000';
 else

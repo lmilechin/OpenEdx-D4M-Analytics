@@ -6,9 +6,12 @@ function [res] = cellContains(cellArray,str)
 
 global isOctave;
 
-if isOctave % Octave does not have a built in function to do this
+% Octave does not have a built in function to do this
+if isOctave
     res = ~cellfun(@isempty,strfind(cellArray,str));
-else % use Matlab's built in function
+    
+% Use Matlab's built in function
+else
     res = contains(cellArray,str);
 end
 

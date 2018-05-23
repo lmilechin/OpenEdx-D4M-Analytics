@@ -5,67 +5,70 @@
 %   runParse will iterate through all the files in dataLoc, copy the
 %   file to the current directory, unzip the file, read in the file and
 %   parse the data, save the data to saveLoc, and delete the unzipped local
-%   copy of the log. This driver file uses "newParse" as the parser.
+%   copy of the log.
 %   Dependency on jsonlab if running in Octave.
 
-%% set path to data logs
-% set the path to the correct Open edX instance before running
+%% Set and add paths
 
-% Set path locations of D4M, data, and outline
+% Set path locations of D4M and JSON parser
 D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
 jsonlabLoc = '/Users/Lauren/Documents/SoftwareAndPackages/jsonlab/'; % only needed for octave
 
+% Set location of parser, raw data, outline, and where parsed data should be saved
 % For this example, these reletive paths should not need editing
 parserLoc = '../../src/matlab-octave/';
 dataLoc='../data/raw/';
 saveLoc = '../data/parsed/matlab-octave/';
 outlineLoc = '../data/';
 
-addpath(D4M_Loc)
-addpath(parserLoc)
-fnames=dir([dataLoc 'tracking.log-*']);
-
+% Some global variables that should be the same throughout process
 global newline;
 newline = sprintf('\n');
-
 global isOctave;
 isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 
+% Add paths to required packages and parser
+addpath(D4M_Loc)
+addpath(parserLoc)
+fnames=dir([dataLoc 'tracking.log-*']);
 if isOctave
     addpath(jsonlabLoc)
 end
 
+% Grab course outlines and create outline struct
 if ~isempty(outlineLoc)
     outlineName = dir([outlineLoc 'outline*']);
     outlineName=outlineName(end).name;
 else
     outlineName = '';
 end
+allOutlines = makeoutlines(fullfile(outlineLoc,outlineName));
 
+% Create save location, if it doesn't already exist
 if ~exist(saveLoc,'dir')
     mkdir(saveLoc)
 end
-Nfile=length(fnames);
-emptyFiles=zeros(length(fnames),1);
-%myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));
-myFiles = 1:Nfile;
 
-allOutlines = makeoutlines(fullfile(outlineLoc,outlineName));
-
-for i=myFiles
+% Parse each file
+for i=1:length(fnames)
     tic
     fname=fnames(i).name;
 
+    % Extract zipped file here
     if isOctave
         copyfile([dataLoc fname],'.');
         gunzip(fname);
     else
         gunzip([dataLoc fname],'.');
     end
+
+    % Parse file into associative array
     A=parseFile(strrep(fname,'.gz',''),allOutlines);
     
+    % Delete local copy
     delete(strrep(fname,'.gz',''))
     
+    % Save associative array if it is not empty
     if ~isempty(A)
         save([saveLoc strrep(fname,'.gz','.mat')],'A');
     else
