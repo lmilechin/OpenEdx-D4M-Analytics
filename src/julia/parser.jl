@@ -1,45 +1,43 @@
-using D4M,JSON,JLD
+using D4M,JSON,JLD,GZip
 
-function extractproblem(event)
-    state = pop!(event,"state") # not useful?
-    answers = pop!(event,"answers") # info in submission
-    submission = pop!(event,"submission")
-    correct_map = pop!(event,"correct_map")
-    problem_id_long = pop!(event,"problem_id")
-    
-    eventcols = []
-    prob_id = ""
-    for key in keys(submission)
-        full_id = split(key,"_")
-        sub_id = join(full_id[2:3],"_")
-        for key2 in keys(submission[key])
-            if !isempty(submission[key][key2])
-                eventcols = [eventcols; "event_"*key2*"_"*sub_id*"|"*string(submission[key][key2])]
-            end
-        end
-        if length(prob_id)<1
-            prob_id = full_id[1]
-        end
-    end
-    eventcols = [eventcols; "event_problem_id|"*prob_id; "event_problem_id_long|"*problem_id_long]
-    
-    for key in keys(correct_map)
-        full_id = split(key,"_")
-        sub_id = join(full_id[2:3],"_")
-        for key2 in keys(correct_map[key])
-            if !(correct_map[key][key2]==nothing) && !isempty(correct_map[key][key2]) && !isa(correct_map[key][key2],Dict)
-                eventcols = [eventcols; "event_"*key2*"_"*sub_id*"|"*string(correct_map[key][key2])]
-            end
-        end
+function parseFile(fname,savename,outlineName)
+    lfname = fname[rsearch(fname,'/')+1:length(fname)]
+    f = GZip.open("$fname.gz")
+    log = readlines(f)
+    outlines = JSON.parse.(readlines(outlineName))
+    allOutlines = Dict{String,Any}()
+    for o in outlines
+        allOutlines[replace(replace(o["root"],"block","course"),"+type@course+course@course","")] = o["blocks"]
     end
     
-    return replace.(eventcols,'\n',"")
+    A = makeAssoc(lfname,log,allOutlines)
+    save(savename,"A",A)
+    
+    return savename
 end
 
-function incourseware(URL,dict)
-    URLparts = split(URL,'/')
-    return (haskey(dict,"context") && haskey(dict["context"],"course_id") && 
-        contains(URL,dict["context"]["course_id"]*"/courseware/") && !contains(URL,"login") && length(URLparts)>7)
+function makeAssoc(fname,log,allOutlines)
+    
+    unneeded=["/handler/xmodule_handler/problem_get","/handler/xmodule_handler/problem_show",
+    "/handler/transcript/translation/en","/handler/xmodule_handler/goto_position",
+    "/handler/xmodule_handler/save_user_state'","/jsi18n","/handler/xmodule_handler/problem_check",
+    "/i18n.js","/xmodule/xmodule.js","problem_graded","page_close","\"username\": \"\""]
+
+    for str in unneeded
+        log = log[.~contains.(log,str)];
+    end
+    log = JSON.parse.(log);
+
+    cols = makecols.(log,allOutlines)
+    lens = length.(cols)
+
+    rIDs = (fname[14:end]*'_').*lpad.([1:length(log);],4,0).*'\n';
+    rIDs = split(join(repeat.(rIDs,lens),"")[1:end-1],'\n')
+
+    cIDs = split(join(join.(cols[cols .!= ""],'\n'),'\n'),'\n')
+    
+    A = Assoc(rIDs, cIDs, 1)
+    
 end
 
 function makecols(dict,allOutlines,prefix="")
@@ -132,47 +130,46 @@ function makecols(dict,allOutlines,prefix="")
     
 end
 
-function makeAssoc(fname,log,allOutlines)
+function extractproblem(event)
+    state = pop!(event,"state") # not useful?
+    answers = pop!(event,"answers") # info in submission
+    submission = pop!(event,"submission")
+    correct_map = pop!(event,"correct_map")
+    problem_id_long = pop!(event,"problem_id")
     
-    unneeded=["/handler/xmodule_handler/problem_get","/handler/xmodule_handler/problem_show",
-    "/handler/transcript/translation/en","/handler/xmodule_handler/goto_position",
-    "/handler/xmodule_handler/save_user_state'","/jsi18n","/handler/xmodule_handler/problem_check",
-    "/i18n.js","/xmodule/xmodule.js","problem_graded","page_close","\"username\": \"\""]
-
-    for str in unneeded
-        log = log[.~contains.(log,str)];
+    eventcols = []
+    prob_id = ""
+    for key in keys(submission)
+        full_id = split(key,"_")
+        sub_id = join(full_id[2:3],"_")
+        for key2 in keys(submission[key])
+            if !isempty(submission[key][key2])
+                eventcols = [eventcols; "event_"*key2*"_"*sub_id*"|"*string(submission[key][key2])]
+            end
+        end
+        if length(prob_id)<1
+            prob_id = full_id[1]
+        end
     end
-    log = JSON.parse.(log);
-
-    cols = makecols.(log,allOutlines)
-    lens = length.(cols)
-
-    rIDs = (fname[14:end]*'_').*lpad.([1:length(log);],4,0).*'\n';
-    rIDs = split(join(repeat.(rIDs,lens),"")[1:end-1],'\n')
-
-    cIDs = split(join(join.(cols[cols .!= ""],'\n'),'\n'),'\n')
+    eventcols = [eventcols; "event_problem_id|"*prob_id; "event_problem_id_long|"*problem_id_long]
     
-    A = Assoc(rIDs, cIDs, 1)
+    for key in keys(correct_map)
+        full_id = split(key,"_")
+        sub_id = join(full_id[2:3],"_")
+        for key2 in keys(correct_map[key])
+            if !(correct_map[key][key2]==nothing) && !isempty(correct_map[key][key2]) && !isa(correct_map[key][key2],Dict)
+                eventcols = [eventcols; "event_"*key2*"_"*sub_id*"|"*string(correct_map[key][key2])]
+            end
+        end
+    end
     
+    return replace.(eventcols,'\n',"")
 end
 
-function parseFile(fname,savename,outlineName)
-    run(`cp $fname.gz ./`)
-    lfname = fname[rsearch(fname,'/')+1:length(fname)]
-    run(`gunzip -f $lfname.gz`)
-    f = open(lfname)
-    log = readlines(f)
-    outlines = JSON.parse.(readlines(outlineName))
-    allOutlines = Dict{String,Any}()
-    for o in outlines
-        allOutlines[replace(replace(o["root"],"block","course"),"+type@course+course@course","")] = o["blocks"]
-    end
-    
-    A = makeAssoc(lfname,log,allOutlines)
-    run(`rm $lfname`)
-    save(savename,"A",A)
-    
-    return savename
+function incourseware(URL,dict)
+    URLparts = split(URL,'/')
+    return (haskey(dict,"context") && haskey(dict["context"],"course_id") && 
+        contains(URL,dict["context"]["course_id"]*"/courseware/") && !contains(URL,"login") && length(URLparts)>7)
 end
 
 function extractnames(url,allOutlines)
