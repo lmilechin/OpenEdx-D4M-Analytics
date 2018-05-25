@@ -15,7 +15,7 @@ To get started you will need GNU Octave and/or Julia, both of which are open sou
    * GNU Octave Download: https://www.gnu.org/software/octave/#install
 
    * You will also need to install jsonlab, which can be found at:
-      ** JsonLab: https://github.com/fangq/jsonlab
+     * JsonLab: https://github.com/fangq/jsonlab
 
 
 ## D4M 
@@ -29,8 +29,8 @@ The exercises have been created as Jupyter Notebooks to provide a complete packa
    
    * Julia: https://github.com/JuliaLang/IJulia.jl
    * GNU Octave: https://github.com/Calysto/octave_kernel 
-      ** We recommend using pip install 
-      ** You will also need to set the following environment variable, detailed in the instructions: OCTAVE_EXECUTABLE=/Applications/Octave.app/Contents/Resources/usr/bin/octave-cli 
+      * We recommend using pip install 
+      * You will also need to set the following environment variable, detailed in the instructions: OCTAVE_EXECUTABLE=/Applications/Octave.app/Contents/Resources/usr/bin/octave-cli 
 
 If you are unfamilar with Jupyter Notebooks, the following tutorial provides a nice introduction.
    
