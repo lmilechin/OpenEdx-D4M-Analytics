@@ -10,12 +10,21 @@
 
 %% Set and add paths
 
-% Set path locations of D4M and JSON parser
+% =============================================================================
+% NOTE:  You will need to update the next 2 lines to reflect the correct path to
+%        the location where you installed d4m and jsonLab on your system.
+%        Set D4M_Loc equal to the full path to d4m/matlab_src
+%        Set jsonlabLoc equal to the full path to jsonlab
+% =============================================================================
+
 D4M_Loc = '/Users/Lauren/Documents/SoftwareAndPackages/d4m/matlab_src/';
 jsonlabLoc = '/Users/Lauren/Documents/SoftwareAndPackages/jsonlab/'; % only needed for octave
 
-% Set location of parser, raw data, outline, and where parsed data should be saved
+% =============================================================================
+% Set location of parser, raw data, and Outline
+% Set location where parsed data should be saved
 % For this example, these reletive paths should not need editing
+% =============================================================================
 parserLoc = '../../src/matlab-octave/';
 dataLoc='../data/raw/';
 saveLoc = '../data/parsed/matlab-octave/';
