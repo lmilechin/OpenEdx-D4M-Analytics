@@ -1,14 +1,14 @@
 using D4M,JSON,JLD,GZip
 
 # Function to read in data and outlines and parse data
-function parseFile(fname,savename,outlineName)
+function parseFile(fname,savename,outlinename)
 
     # Read in log file
     f = GZip.open("$fname.gz")
     log = readlines(f)
 
     # Parse outlines and combine into single dict
-    outlines = JSON.parse.(readlines(outlineName))
+    outlines = JSON.parse.(readlines(outlinename))
     allOutlines = Dict{String,Any}()
     for o in outlines
         allOutlines[replace(replace(o["root"],"block","course"),"+type@course+course@course","")] = o["blocks"]
@@ -19,19 +19,21 @@ function parseFile(fname,savename,outlineName)
 
     # Create associative array and save
     A = makeAssoc(filename,log,allOutlines)
-    save(savename,"A",A)
+    if !isempty(A)
+        save(savename,"A",A)
+        return savename
+    else
+        return nothing
+    end
     
-    return savename
+    
 end
 
 # Function to create associative array
 function makeAssoc(fname,log,allOutlines)
     
     # Strings that occur in uninteresting events
-    unneeded=["/handler/xmodule_handler/problem_get","/handler/xmodule_handler/problem_show",
-    "/handler/transcript/translation/en","/handler/xmodule_handler/goto_position",
-    "/handler/xmodule_handler/save_user_state'","/jsi18n","/handler/xmodule_handler/problem_check",
-    "/i18n.js","/xmodule/xmodule.js","problem_graded","page_close","\"username\": \"\""]
+    unneeded=["page_close","\"username\": \"\""]
 
     # Remove any uninteresting events now
     for str in unneeded
@@ -43,15 +45,22 @@ function makeAssoc(fname,log,allOutlines)
 
     # Make column keys
     cols = makecols.(log,allOutlines)
-    cIDs = split(join(join.(cols[cols .!= ""],'\n'),'\n'),'\n')
 
-    # Make row keys
-    lens = length.(cols)
-    rIDs = (fname[14:end]*'_').*lpad.([1:length(log);],4,0).*'\n';
-    rIDs = split(join(repeat.(rIDs,lens),"")[1:end-1],'\n')
+    # Return emtpy associative array if cols is empty
+    if isempty(cols)
+        A = Assoc("","","")
+    else
+        # Finish column keys
+        cIDs = split(join(join.(cols[cols .!= ""],'\n'),'\n'),'\n')
 
-    # Form associative array
-    A = Assoc(rIDs, cIDs, 1)
+        # Make row keys
+        lens = length.(cols)
+        rIDs = (fname[14:end]*'_').*lpad.([1:length(log);],4,0).*'\n';
+        rIDs = split(join(repeat.(rIDs,lens),"")[1:end-1],'\n')
+
+        # Form associative array
+        A = Assoc(rIDs, cIDs, 1)
+    end
     
 end
 
